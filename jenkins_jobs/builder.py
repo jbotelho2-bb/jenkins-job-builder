@@ -77,10 +77,15 @@ class JenkinsManager(object):
             self._job_list = set(job['name'] for job in self.jobs)
         return self._job_list
 
-    def update_job(self, job_name, xml):
+    def update_job(self, job):
+        job_name = job.name
+        xml = job.output().decode('utf-8')
         if self.is_job(job_name):
-            logger.info("Reconfiguring jenkins job {0}".format(job_name))
-            self.jenkins.reconfig_job(job_name, xml)
+            if job.overwrite:
+                logger.info("Reconfiguring jenkins job {0}".format(job_name))
+                self.jenkins.reconfig_job(job_name, xml)
+            else:
+                logger.info("Skipping existing jenkins job {0}".format(job_name))
         else:
             logger.info("Creating jenkins job {0}".format(job_name))
             self.jenkins.create_job(job_name, xml)
@@ -272,5 +277,5 @@ class JenkinsManager(object):
 
     @concurrent
     def parallel_update_job(self, job):
-        self.update_job(job.name, job.output().decode('utf-8'))
+        self.update_job(job)
         return (job.name, job.md5())

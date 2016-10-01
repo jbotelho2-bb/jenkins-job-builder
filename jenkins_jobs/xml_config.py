@@ -51,9 +51,10 @@ def remove_ignorable_whitespace(node):
 
 
 class XmlJob(object):
-    def __init__(self, xml, name):
+    def __init__(self, xml, name, overwrite=True):
         self.xml = xml
         self.name = name
+        self.overwrite = overwrite
 
     def md5(self):
         return hashlib.md5(self.output()).hexdigest()
@@ -79,6 +80,7 @@ class XmlJobGenerator(object):
 
     def __getXMLForJob(self, data):
         kind = data.get('project-type', 'freestyle')
+        overwrite = data.get('overwrite', True)
 
         for ep in pkg_resources.iter_entry_points(
                 group='jenkins_jobs.projects', name=kind):
@@ -86,7 +88,7 @@ class XmlJobGenerator(object):
             mod = Mod(self.registry)
             xml = mod.root_xml(data)
             self.__gen_xml(xml, data)
-            job = XmlJob(xml, data['name'])
+            job = XmlJob(xml, data['name'], overwrite)
             return job
 
         raise errors.JenkinsJobsException("Unrecognized project type: '%s'"
